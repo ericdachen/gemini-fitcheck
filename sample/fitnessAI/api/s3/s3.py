@@ -6,7 +6,8 @@ from datetime import datetime
 
 S3_REGION = 'us-east-2'
 UPLOAD_EXPIRY = 1800
-S3_BUCKET = 'gemini-fit-checks'
+# S3_BUCKET = 'gemini-fit-checks'
+S3_BUCKET = 'adamfitcheck'
 
 settings = get_settings()
 

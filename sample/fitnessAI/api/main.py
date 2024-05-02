@@ -3,9 +3,10 @@ from fastapi import FastAPI, Request
 from s3.s3 import fetch_presigned_url
 
 
+
 def initialAppSetup():
     app = FastAPI()
-
+    
     return app
 
 app = initialAppSetup()
