@@ -1,7 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-import DragDropArea from './DragDrop';
-import axios from 'axios';
+import DragDropArea from './DragDrop.js';
 
 function App() {
 
