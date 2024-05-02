@@ -21,6 +21,7 @@ class VideoDrawer:
         
         self.output_count = 0
         self.base = output_folder_path
+        self.video_path = video_full_path
         self.output_path = os.path.join(self.base, f'annotated_video_{self.output_count}.mp4')
 
         # Setup MediaPipe Pose
@@ -30,17 +31,25 @@ class VideoDrawer:
 
         # Load video
 
-        self.video = cv2.VideoCapture(video_full_path)
-        frame_width = int(self.video.get(cv2.CAP_PROP_FRAME_WIDTH))
-        frame_height = int(self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.fps = self.video.get(cv2.CAP_PROP_FPS)
+        self.video = ... # to be set
+        self.frame_width = ... # to be set
+        self.frame_height = ... # to be set
+        self.fps = ... # to be set
 
+        self.fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        self.out = ... # to be set
+        
+    
+    def _set_video(self):
+        self.video = cv2.VideoCapture(self.video_path)
         if not self.video.isOpened():
             print("Error: Could not open video.")
+        
+        self.frame_width = int(self.video.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.frame_height = int(self.video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.fps = self.video.get(cv2.CAP_PROP_FPS)
+        self.out = cv2.VideoWriter(self.output_path, self.fourcc, self.fps, (self.frame_width, self.frame_height))
 
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        self.out = cv2.VideoWriter(self.output_path, fourcc, self.fps, (frame_width, frame_height))
-    
 
     def draw_landmarks_and_connections_with_colour(self, frame, landmarks, original_to_filtered_index):
         part_colors = {
@@ -140,7 +149,7 @@ class VideoDrawer:
         
         # Loop through all landmarks to draw circles
 
-    def severity_test(self, value: int):
+    def _severity_test(self, value: int):
         """Returns 0 (not severe), 1 (somewhat severe), 2 (severe), 4(very sever)
         """
         lst = [[0, 1, 2, 5], [4, 5, 6], [7, 8], [9, 10]]
@@ -150,11 +159,12 @@ class VideoDrawer:
         return 0
 
     def draw_loop(self, start_time_tuple, end_time_tuple, part_list, severity):
+        self._set_video()
         start_frame = int((60*start_time_tuple[0]+start_time_tuple[1]) * self.fps)
         end_frame = int((60*end_time_tuple[0]+end_time_tuple[1]) * self.fps)
         frame_count = 0
         part_indices = sum([part_groups[part] for part in part_list],[])
-        severity_index = self.severity_test(severity)
+        severity_index = self._severity_test(severity)
         # print(part_indices)
         while self.video.isOpened():
             

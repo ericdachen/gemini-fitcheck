@@ -6,6 +6,27 @@ from sample.fitnessAI.api.helper.videoDrawer import VideoDrawer
 from sample.fitnessAI.api.helper.nlp import map_body_parts
 
 
+# NOSE = 'nose'
+# EYES = 'eyes'
+# EARS = 'ears'
+body_parts = {
+    'shoulders': ['shoulders'],
+    'elbows': ['elbows'],
+    'wrists': ['wrists'],
+    'hips':['hips'],
+    'knees': ['knees'],
+    'ankles': ['ankles'], 
+    'feet': ['feet'],
+    'body': ['shoulders', 'hips'],
+    'chest': ['shoulders', 'hips'],
+    'back': ['shoulders', 'hips'],
+    'legs': ['hips', 'knees', 'ankles'],
+    'calves': ['knees', 'ankles'],
+    'arms': ['shoulders', 'elbows', 'wrists']
+}
+ALL = ['shoulders', 'elbows', 'wrists', 'hips', 'knees', 'ankles', 'feet'] 
+
+
 # Skipping previous parsing
 
 model_output_sample = """
@@ -35,7 +56,7 @@ The individual's form has some issues that need to be addressed to maximize the 
 **By focusing on proper form and technique, the individual can improve the effectiveness of the cable crossover exercise and reduce the risk of injury.** 
 """
 
-issues = re.findall(r'\*\*([0-9]{1,2}:[0-9]{2})\*\* - .*?\(Severity: \b(10|[0-9])\b/10\) .*?\(Body parts: ([\w\s,]+)\)',model_output_sample)
+# issues = re.findall(r'\*\*([0-9]{1,2}:[0-9]{2})\*\* - .*?\(Severity: \b(10|[0-9])\b/10\) .*?\(Body parts: ([\w\s,]+)\)',model_output_sample)
 """
 Index
 - 0 == timestamp
@@ -61,79 +82,53 @@ def end_time_check(min: int, sec: int, addition_sec: int) -> tuple:
     else:
         return (min, sec+addition_sec)
 
-# one set of issues
-set_1 = issues[3]
-min, sec = list(map(int, set_1[0].split(':')))
-start_time = (min, sec)
-end_time = end_time_check(min, sec, addition_sec=5)
-severity = int(set_1[1])
-body_list = set_1[2].split(', ')
+def conduct_drawing(issues_list, drawer: VideoDrawer):
 
+    for issue in issues_list:
 
-video_drawer = VideoDrawer(
-    video_full_path=os.path.join(
-        os.path.dirname(__file__), 
-        '..', 
-        'content', 
-        'videos', 
-        '2024.04.11_GYM_ERIC.mp4'
-    ),
-    output_folder_path=os.path.join(
-        os.path.dirname(__file__), 
-        '..', 
-        'content', 
-        'parsed_outputs', 
-        'draw_test'
+        set_1 = issue
+        min, sec = list(map(int, set_1[0].split(':')))
+        start_time = (min, sec)
+        end_time = end_time_check(min, sec, addition_sec=5)
+        print(start_time, end_time)
+        severity = int(set_1[1])
+        body_list = set_1[2].split(', ')
+
+        output_bodyparts = map_body_parts(input_parts=body_list, body_parts_dict=body_parts)
+        if 'chest' in body_list:
+            final_output = sum([body_parts[part] for part in output_bodyparts], [])
+            final_output.extend(body_parts['chest'])
+        else:
+            final_output = sum([body_parts[part] for part in output_bodyparts], [])
+        adj_final_output = final_output if final_output else ALL
+
+        drawer.draw_loop(
+            start_time_tuple=start_time,
+            end_time_tuple=end_time,
+            part_list=list(set(adj_final_output)),
+            severity=severity
+        )
+
+if __name__ == "__main__":
+
+    video_drawer = VideoDrawer(
+        video_full_path=os.path.join(
+            os.path.dirname(__file__), 
+            '..', 
+            'content', 
+            'videos', 
+            '2024.04.11_GYM_ERIC.mp4'
+        ),
+        output_folder_path=os.path.join(
+            os.path.dirname(__file__), 
+            '..', 
+            'content', 
+            'parsed_outputs', 
+            'draw_test'
+        )
     )
-)
-
-
-# NOSE = 'nose'
-# EYES = 'eyes'
-# EARS = 'ears'
-body_parts = {
-    'shoulders': ['shoulders'],
-    'elbows': ['elbows'],
-    'wrists': ['wrists'],
-    'hips':['hips'],
-    'knees': ['knees'],
-    'ankles': ['ankles'], 
-    'feet': ['feet'],
-    'body': ['shoulders', 'hips'],
-    'chest': ['shoulders', 'hips'],
-    'back': ['shoulders', 'hips'],
-    'legs': ['hips', 'knees', 'ankles'],
-    'calves': ['knees', 'ankles'],
-    'arms': ['shoulders', 'elbows', 'wrists']
-}
-ALL = ['shoulders', 'elbows', 'wrists', 'hips', 'knees', 'ankles', 'feet'] 
-
-output_bodyparts = map_body_parts(input_parts=body_list, body_parts_dict=body_parts)
-print(output_bodyparts)
-if 'chest' in body_list:
-    final_output = sum([body_parts[part] for part in output_bodyparts], [])
-    final_output.extend(body_parts['chest'])
-else:
-    final_output = sum([body_parts[part] for part in output_bodyparts], [])
-adj_final_output = final_output if final_output else ALL
-
-
-# SHOULDERS = 'shoulders'
-# ELBOWS = 'elbows'
-# WRISTS = 'wrists'
-# HIPS = 'hips'
-# KNEES = 'knees'
-# ANKLES = 'ankles' 
-# FEET = 'feet'
-# # If non
-
-
-
-video_drawer.draw_loop(
-    start_time_tuple=start_time,
-    end_time_tuple=end_time,
-    part_list=list(set(adj_final_output)),
-    severity=severity
-)
-
-
+    issues = re.findall(r'\*\*([0-9]{1,2}:[0-9]{2})\*\* - .*?\(Severity: \b(10|[0-9])\b/10\) .*?\(Body parts: ([\w\s,]+)\)',model_output_sample)
+    conduct_drawing(
+        issues_list=issues,
+        drawer=video_drawer
+    )
