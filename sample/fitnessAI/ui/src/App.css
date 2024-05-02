@@ -24,6 +24,13 @@
   color: white;
 }
 
+.drag-drop-area {
+  border-radius: 12px;
+  border: 2px dotted blue;
+  padding: 10px;
+  
+}
+
 .App-link {
   color: #61dafb;
 }
