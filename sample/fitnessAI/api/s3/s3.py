@@ -1,6 +1,6 @@
 import boto3
 from botocore.exceptions import ClientError
-from api.config import get_settings
+from config import get_settings
 from datetime import datetime
 
 
@@ -18,13 +18,15 @@ s3_client = boto3.client(
     aws_secret_access_key=settings.aws_secret_key
 )
 
-def fetch_presigned_url(file_name):
+def fetch_presigned_url(file_name, fields=None, conditions=None):
     now_time = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 
     try:
         presigned_url = s3_client.generate_presigned_post(
             S3_BUCKET,
             f'{file_name}/{now_time}',
+            Fields=fields,
+            Conditions=conditions,
             ExpiresIn=UPLOAD_EXPIRY,
         )
     except ClientError as error:
