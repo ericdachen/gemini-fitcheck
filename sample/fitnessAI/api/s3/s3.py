@@ -1,6 +1,8 @@
 import boto3
 from botocore.exceptions import ClientError
-from config import get_settings
+# from config import get_settings
+# from sample.fitnessAI.api.config import get_settings
+from api.config import get_settings
 from datetime import datetime
 
 
@@ -34,3 +36,16 @@ def fetch_presigned_url(file_name, fields=None, conditions=None):
         return None
     
     return presigned_url
+
+def create_presigned_url(key, expiration=1800):
+    """Generate a presigned URL to retrieve an S3 object"""
+    # Create a S3 client
+    try:
+        response = s3_client.generate_presigned_url('get_object',
+                                                    Params={'Bucket': S3_BUCKET,
+                                                            'Key': key},
+                                                    ExpiresIn=expiration)
+    except ClientError as e:
+        print('Error generating presigned URL: ', e)
+        return None
+    return response

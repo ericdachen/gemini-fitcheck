@@ -50,6 +50,9 @@ class geminiFitCheck:
         compiled_prompt = file_timestamp_list + [prompt]
         return self.model.generate_content(compiled_prompt)
 
+    def upload_file(self, path):
+        return genai.upload_file(path=path)
+
 
 
 
