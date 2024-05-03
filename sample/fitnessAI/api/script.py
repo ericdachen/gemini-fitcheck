@@ -2,10 +2,15 @@ import requests
 import tempfile
 import re
 import cv2
-from sample.fitnessAI.api.helper.geminiAccess import geminiFitCheck
-from sample.fitnessAI.api.instructions import instruction
-from sample.fitnessAI.api.helper.videoDrawerModified import VideoDrawer
-from sample.fitnessAI.api.helper.nlp import map_body_parts
+# from sample.fitnessAI.api.helper.geminiAccess import geminiFitCheck
+# from sample.fitnessAI.api.instructions import instruction
+# from sample.fitnessAI.api.helper.videoDrawerModified import VideoDrawer
+# from sample.fitnessAI.api.helper.nlp import map_body_parts
+
+from api.helper.geminiAccess import geminiFitCheck
+from api.instructions import instruction
+from api.helper.videoDrawerModified import VideoDrawer
+from api.helper.nlp import map_body_parts
 import os
 FRAME_PREFIX = "_frame"
 
@@ -43,8 +48,8 @@ def conduct_drawing(issues_list, drawer: VideoDrawer):
         start_time = (min, sec)
         end_time = end_time_check(min, sec, addition_sec=5)
         print(start_time, end_time)
-        severity = int(set_1[1])
-        detail = set_1[2]
+        severity = int(set_1[2])
+        detail = set_1[1]
         body_list = set_1[3].split(', ')
 
         output_bodyparts = map_body_parts(input_parts=body_list, body_parts_dict=body_parts)
@@ -128,17 +133,13 @@ def main(presigned_url_get_request, file_name):
     
     temp_fd, temp_path = tempfile.mkstemp(suffix='.mp4')
     os.close(temp_fd)
+    temp_fd2, temp_path2 = tempfile.mkstemp(suffix='.mp4')
+    os.close(temp_fd2)
     with open(temp_path, 'wb') as temp_file:  # Open the file in binary write mode
         temp_file.write(download_response.content) 
     video_drawer = VideoDrawer(
         video_full_path=temp_path,
-        output_folder_path=os.path.join(
-            os.path.dirname(__file__), 
-            '..', 
-            'content', 
-            'parsed_outputs', 
-            'draw_test'
-        ),
+        temp_output_full_path=temp_path2,
         file_name=file_name
     )
     result = conduct_drawing(
@@ -146,6 +147,7 @@ def main(presigned_url_get_request, file_name):
         drawer=video_drawer
     )
     os.unlink(temp_path)
+    os.unlink(temp_path2)
     
     return result
 

@@ -20,8 +20,12 @@ s3_client = boto3.client(
     aws_secret_access_key=settings.aws_secret_key
 )
 
-def fetch_presigned_url(file_name, fields=None, conditions=None):
+def fetch_presigned_url(file_name, fields=None, conditions=None, mp4:bool=False):
     now_time = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    if mp4:
+        name = f'{file_name}/{now_time}.mp4'
+    else:
+        name = f'{file_name}/{now_time}'
 
     try:
         presigned_url = s3_client.generate_presigned_post(

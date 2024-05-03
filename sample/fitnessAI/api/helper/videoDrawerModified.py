@@ -3,7 +3,8 @@ import mediapipe as mp
 import os
 import requests
 import json
-from sample.fitnessAI.api.s3.s3 import create_presigned_url
+# from sample.fitnessAI.api.s3.s3 import create_presigned_url
+from api.s3.s3 import fetch_presigned_url, create_presigned_url
 
 part_groups = {
     'nose': [0],
@@ -20,14 +21,13 @@ part_groups = {
 
 class VideoDrawer:
         
-    def __init__(self, video_full_path, output_folder_path, file_name) -> None:
+    def __init__(self, video_full_path, temp_output_full_path, file_name) -> None:
         
         self.output_count = 0
-        self.base = output_folder_path
         self.file_name = file_name
         self.video_path = video_full_path
-        self.output_path = os.path.join(self.base, f'{file_name}_annotated_video_{self.output_count}.mp4')
-        self.output_filename = f'{self.file_name}/annotated_video_{self.output_count}.mp4'
+        self.output_path = temp_output_full_path
+        self.output_filename = f'{self.file_name}_annotated_video_{self.output_count}.mp4'
 
         # Setup MediaPipe Pose
         self.mp_pose = mp.solutions.pose
@@ -205,13 +205,14 @@ class VideoDrawer:
         self.video.release()
         self.out.release()
 
-        presigned_response = self.get_presigned_s3(self.output_filename)
-        upload_response = self.upload_file_to_s3(presigned_response, self.video_path)
-        get_presigned_url = create_presigned_url(json.loads(presigned_response.text)['fields']['key'])
+        print('Presigning!')
+
+        presigned_response = fetch_presigned_url(self.output_filename, mp4=True) # I need another server to presign...
+        upload_response = self.upload_file_to_s3(presigned_response, self.output_path)
+        get_presigned_url = create_presigned_url(presigned_response['fields']['key'])
 
 
         self.output_count += 1
-        self.output_path = os.path.join(self.base, f'annotated_video_{self.output_count}.mp4')
         self.output_filename = f'{self.file_name}/annotated_video_{self.output_count}.mp4'
 
         
@@ -219,17 +220,11 @@ class VideoDrawer:
         print("Video processing complete. Video saved to:", self.output_path)
         return get_presigned_url
     
-    def get_presigned_s3(self, file_name):
-        url = f'http://127.0.0.1:8000/upload-url'
-        response = requests.post(url=url, data={'file_name': file_name})
-        return response
-    
     def upload_file_to_s3(aelf, response, file_path):
-        dct = json.loads(response.text)
         with open(file_path, 'rb') as f: # rb data open allows easier transfer
             files = {'file': (os.path.basename(file_path), f)}
-            response = requests.post(dct['url'], data=dct['fields'], files=files)
-            return response.status_code, response.content
+            res = requests.post(response['url'], data=response['fields'], files=files)
+            return res.status_code, res.content
 
 if __name__ == "__main__":
     file_dir = os.path.dirname(__file__) # Base would be gemini-fitcheck
